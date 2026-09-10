@@ -1,0 +1,361 @@
+// ---------------------------------------------------------------------------
+// NOVA — data model
+//
+// Tenancy: `Workspace` is the tenant boundary. Every project, label, task,
+// activity entry and invitation hangs off exactly one workspace, and every read
+// path in the API is scoped by a workspace the caller is a verified member of.
+//
+// The enums below mirror `packages/shared/src/constants/enums.ts` exactly.
+// ---------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------- Enums ---------------------------------------
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ProjectRole {
+  LEAD
+  MEMBER
+  VIEWER
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+enum TaskStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+enum ActivityType {
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  PROJECT_ARCHIVED
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_STATUS_CHANGED
+  TASK_ASSIGNED
+  TASK_UNASSIGNED
+  TASK_PRIORITY_CHANGED
+  TASK_COMPLETED
+  TASK_REOPENED
+  TASK_DELETED
+  COMMENT_CREATED
+  COMMENT_DELETED
+  MEMBER_JOINED
+  MEMBER_INVITED
+  MEMBER_ROLE_CHANGED
+  MEMBER_REMOVED
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_STATUS_CHANGED
+  TASK_DUE_SOON
+  COMMENT_MENTION
+  COMMENT_ON_TASK
+  PROJECT_INVITE
+  WORKSPACE_INVITE
+}
+
+// ----------------------------- Identity ------------------------------------
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  name         String
+  passwordHash String
+  avatarUrl    String?
+  jobTitle     String?
+  timezone     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships        WorkspaceMember[]
+  projectMemberships ProjectMember[]
+  createdProjects    Project[]         @relation("ProjectCreatedBy")
+  createdTasks       Task[]            @relation("TaskCreatedBy")
+  assignedTasks      Task[]            @relation("TaskAssignee")
+  comments           Comment[]
+  activities         Activity[]
+  notifications      Notification[]
+  refreshTokens      RefreshToken[]
+  sentInvitations    Invitation[]      @relation("InvitationInvitedBy")
+
+  @@map("users")
+}
+
+/// Rotating refresh tokens. Only the SHA-256 hash is persisted, so a database
+/// leak cannot be replayed against the API.
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  ipAddress String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+// ----------------------------- Tenancy -------------------------------------
+
+model Workspace {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members     WorkspaceMember[]
+  projects    Project[]
+  labels      Label[]
+  invitations Invitation[]
+  activities  Activity[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(MEMBER)
+  joinedAt    DateTime      @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@map("workspace_members")
+}
+
+model Invitation {
+  id          String           @id @default(cuid())
+  workspaceId String
+  email       String
+  role        WorkspaceRole    @default(MEMBER)
+  token       String           @unique
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  invitedById String
+  createdAt   DateTime         @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invitedBy User      @relation("InvitationInvitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, status])
+  @@index([email])
+  @@map("invitations")
+}
+
+// ----------------------------- Delivery ------------------------------------
+
+model Project {
+  id          String        @id @default(cuid())
+  workspaceId String
+  name        String
+  /// Short prefix used to build task references such as NOVA-42.
+  key         String
+  description String?
+  status      ProjectStatus @default(PLANNING)
+  color       String        @default("#6366f1")
+  startDate   DateTime?
+  dueDate     DateTime?
+  /// Monotonic counter backing per-project task numbering.
+  taskCounter Int           @default(0)
+  createdById String
+  archivedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace  Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy  User            @relation("ProjectCreatedBy", fields: [createdById], references: [id])
+  members    ProjectMember[]
+  tasks      Task[]
+  activities Activity[]
+
+  @@unique([workspaceId, key])
+  @@index([workspaceId, status])
+  @@index([workspaceId, updatedAt])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String      @id @default(cuid())
+  projectId String
+  userId    String
+  role      ProjectRole @default(MEMBER)
+  joinedAt  DateTime    @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model Label {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  color       String   @default("#6366f1")
+  createdAt   DateTime @default(now())
+
+  workspace Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks     TaskLabel[]
+
+  @@unique([workspaceId, name])
+  @@map("labels")
+}
+
+model Task {
+  id            String       @id @default(cuid())
+  projectId     String
+  /// Per-project sequence number; combined with Project.key to form the reference.
+  number        Int
+  title         String
+  description   String?
+  status        TaskStatus   @default(TODO)
+  priority      TaskPriority @default(MEDIUM)
+  /// Fractional index used to order cards inside a board column.
+  position      Float        @default(0)
+  estimateHours Float?
+  startDate     DateTime?
+  dueDate       DateTime?
+  completedAt   DateTime?
+  assigneeId    String?
+  createdById   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee   User?       @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy  User        @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  labels     TaskLabel[]
+  comments   Comment[]
+  activities Activity[]
+
+  @@unique([projectId, number])
+  @@index([projectId, status, position])
+  @@index([assigneeId, status])
+  @@index([dueDate])
+  @@index([createdAt])
+  @@map("tasks")
+}
+
+model TaskLabel {
+  taskId  String
+  labelId String
+
+  task  Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, labelId])
+  @@index([labelId])
+  @@map("task_labels")
+}
+
+model Comment {
+  id       String @id @default(cuid())
+  taskId   String
+  authorId String
+  body     String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, createdAt])
+  @@map("comments")
+}
+
+// ----------------------------- Signals -------------------------------------
+
+model Activity {
+  id          String       @id @default(cuid())
+  workspaceId String
+  projectId   String?
+  taskId      String?
+  actorId     String
+  type        ActivityType
+  metadata    Json         @default("{}")
+  createdAt   DateTime     @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task      Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actor     User      @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+  @@index([projectId, createdAt])
+  @@index([taskId, createdAt])
+  @@map("activities")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}

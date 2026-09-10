@@ -1,0 +1,45 @@
+{
+  "name": "nova",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NOVA — Team Productivity Platform. Plan. Collaborate. Deliver.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm run dev --workspace @nova/api",
+    "dev:web": "npm run dev --workspace @nova/web",
+    "build": "npm run build --workspace @nova/shared && npm run build --workspace @nova/api && npm run build --workspace @nova/web",
+    "build:shared": "npm run build --workspace @nova/shared",
+    "build:api": "npm run build --workspace @nova/api",
+    "build:web": "npm run build --workspace @nova/web",
+    "start:api": "npm run start --workspace @nova/api",
+    "start:web": "npm run start --workspace @nova/web",
+    "db:generate": "npm run db:generate --workspace @nova/api",
+    "db:migrate": "npm run db:migrate --workspace @nova/api",
+    "db:deploy": "npm run db:deploy --workspace @nova/api",
+    "db:push": "npm run db:push --workspace @nova/api",
+    "db:seed": "npm run db:seed --workspace @nova/api",
+    "db:studio": "npm run db:studio --workspace @nova/api",
+    "db:reset": "npm run db:reset --workspace @nova/api",
+    "test": "npm run test --workspace @nova/api",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,css}\"",
+    "clean": "rimraf node_modules apps/*/node_modules packages/*/node_modules apps/*/dist packages/*/dist apps/web/.next"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.3"
+  }
+}

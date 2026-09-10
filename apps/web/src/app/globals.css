@@ -1,0 +1,302 @@
+@import 'tailwindcss';
+
+/*
+ * NOVA design system
+ * ------------------
+ * One palette, expressed as semantic tokens. Components never reference a raw
+ * colour such as `slate-700`; they reference a role such as `border` or
+ * `muted-foreground`, which is what lets the entire product switch theme by
+ * swapping the values below and nothing else.
+ *
+ * Colours are authored in OKLCH so that lightness is perceptually even: the dark
+ * theme is a genuine re-tuning rather than an inverted light theme.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: oklch(0.985 0.003 265);
+  --foreground: oklch(0.22 0.02 265);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.02 265);
+
+  --muted: oklch(0.965 0.005 265);
+  --muted-foreground: oklch(0.54 0.017 265);
+
+  --border: oklch(0.918 0.006 265);
+  --input: oklch(0.95 0.006 265);
+  --ring: oklch(0.58 0.2 277);
+
+  --primary: oklch(0.55 0.208 277);
+  --primary-hover: oklch(0.5 0.21 277);
+  --primary-foreground: oklch(0.99 0.005 275);
+  --primary-subtle: oklch(0.955 0.025 277);
+
+  --success: oklch(0.62 0.15 155);
+  --success-subtle: oklch(0.955 0.04 160);
+  --warning: oklch(0.72 0.16 72);
+  --warning-subtle: oklch(0.96 0.05 85);
+  --danger: oklch(0.58 0.21 25);
+  --danger-subtle: oklch(0.955 0.035 25);
+  --info: oklch(0.62 0.15 235);
+  --info-subtle: oklch(0.955 0.035 235);
+
+  /* Board column accents, one per workflow status. */
+  --status-backlog: oklch(0.6 0.02 265);
+  --status-todo: oklch(0.62 0.15 235);
+  --status-progress: oklch(0.66 0.17 60);
+  --status-review: oklch(0.6 0.19 300);
+  --status-done: oklch(0.62 0.15 155);
+
+  --radius: 0.75rem;
+
+  --shadow-subtle: 0 1px 2px 0 oklch(0.22 0.02 265 / 0.05);
+  --shadow-card:
+    0 1px 3px 0 oklch(0.22 0.02 265 / 0.07), 0 1px 2px -1px oklch(0.22 0.02 265 / 0.05);
+  --shadow-raised:
+    0 10px 24px -6px oklch(0.22 0.02 265 / 0.12), 0 4px 8px -4px oklch(0.22 0.02 265 / 0.08);
+  --shadow-overlay: 0 24px 60px -12px oklch(0.2 0.02 265 / 0.3);
+}
+
+.dark {
+  --background: oklch(0.178 0.012 265);
+  --foreground: oklch(0.965 0.005 265);
+
+  --card: oklch(0.215 0.014 265);
+  --card-foreground: oklch(0.965 0.005 265);
+
+  --muted: oklch(0.253 0.014 265);
+  --muted-foreground: oklch(0.695 0.018 265);
+
+  --border: oklch(0.298 0.016 265);
+  --input: oklch(0.27 0.016 265);
+  --ring: oklch(0.68 0.17 277);
+
+  --primary: oklch(0.665 0.185 277);
+  --primary-hover: oklch(0.71 0.18 277);
+  --primary-foreground: oklch(0.16 0.02 277);
+  --primary-subtle: oklch(0.3 0.055 277);
+
+  --success: oklch(0.72 0.15 158);
+  --success-subtle: oklch(0.3 0.05 158);
+  --warning: oklch(0.79 0.15 78);
+  --warning-subtle: oklch(0.32 0.05 78);
+  --danger: oklch(0.68 0.19 25);
+  --danger-subtle: oklch(0.32 0.06 25);
+  --info: oklch(0.71 0.14 235);
+  --info-subtle: oklch(0.3 0.05 235);
+
+  --status-backlog: oklch(0.68 0.02 265);
+  --status-todo: oklch(0.71 0.14 235);
+  --status-progress: oklch(0.77 0.15 68);
+  --status-review: oklch(0.7 0.17 300);
+  --status-done: oklch(0.72 0.15 158);
+
+  --shadow-subtle: 0 1px 2px 0 oklch(0 0 0 / 0.4);
+  --shadow-card: 0 1px 3px 0 oklch(0 0 0 / 0.45), 0 1px 2px -1px oklch(0 0 0 / 0.35);
+  --shadow-raised: 0 10px 24px -6px oklch(0 0 0 / 0.55), 0 4px 8px -4px oklch(0 0 0 / 0.4);
+  --shadow-overlay: 0 24px 60px -12px oklch(0 0 0 / 0.7);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-subtle: var(--primary-subtle);
+
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-danger: var(--danger);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-info: var(--info);
+  --color-info-subtle: var(--info-subtle);
+
+  --color-status-backlog: var(--status-backlog);
+  --color-status-todo: var(--status-todo);
+  --color-status-progress: var(--status-progress);
+  --color-status-review: var(--status-review);
+  --color-status-done: var(--status-done);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 0.25rem);
+  --radius-sm: calc(var(--radius) - 0.375rem);
+  --radius-xl: calc(var(--radius) + 0.25rem);
+
+  --shadow-subtle: var(--shadow-subtle);
+  --shadow-card: var(--shadow-card);
+  --shadow-raised: var(--shadow-raised);
+  --shadow-overlay: var(--shadow-overlay);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', monospace;
+
+  --animate-fade-in: fade-in 0.18s ease-out;
+  --animate-slide-up: slide-up 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-scale-in: scale-in 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-shimmer: shimmer 1.6s linear infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Visible focus, but only for keyboard users — pointer users never see a ring. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--primary-subtle);
+    color: var(--foreground);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.018em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* A scrollbar that belongs to the theme rather than to the operating system. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Loading placeholder that reads as "content is coming", not "something broke". */
+  .skeleton {
+    background-image: linear-gradient(
+      90deg,
+      var(--muted) 0%,
+      color-mix(in oklch, var(--muted), var(--border) 60%) 50%,
+      var(--muted) 100%
+    );
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+
+  .glass {
+    background-color: color-mix(in oklch, var(--card), transparent 25%);
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+
+  /* Fades the bottom of a scroll region so cut-off content is legible as cut off. */
+  .fade-bottom {
+    mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent 100%);
+  }
+
+  .grid-backdrop {
+    background-image:
+      linear-gradient(to right, var(--border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 78%);
+  }
+}

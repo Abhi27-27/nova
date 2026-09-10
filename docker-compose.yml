@@ -1,0 +1,30 @@
+# Local PostgreSQL for NOVA.
+#
+#   docker compose up -d
+#   cp apps/api/.env.example apps/api/.env   # DATABASE_URL already matches this service
+#   npm run db:migrate && npm run db:seed
+#
+# No Docker? Use a free hosted Postgres (Neon or Supabase) and paste its
+# connection string into apps/api/.env instead — nothing else changes.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nova-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nova
+      POSTGRES_PASSWORD: nova
+      POSTGRES_DB: nova
+    ports:
+      - '5432:5432'
+    volumes:
+      - nova-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U nova -d nova']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  nova-postgres-data:
