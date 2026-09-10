@@ -12,13 +12,17 @@ import { connectDatabase, disconnectDatabase } from './lib/prisma.js';
  * old instance drops in-flight requests the moment the new one is ready.
  */
 async function main(): Promise<void> {
-  await connectDatabase();
+  const databaseReady = await connectDatabase();
 
   const app = createApp();
   const server: Server = app.listen(env.PORT, () => {
     logger.info(
       `${APP_NAME} API listening on http://localhost:${env.PORT} (${env.NODE_ENV}) — docs at /docs`,
     );
+
+    if (!databaseReady) {
+      logger.warn('Started without a database connection — /api/v1/health will report degraded');
+    }
   });
 
   let shuttingDown = false;

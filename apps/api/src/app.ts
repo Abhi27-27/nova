@@ -6,6 +6,7 @@ import express, { type Express } from 'express';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 import { env, isProduction } from './config/env.js';
+import { logger } from './config/logger.js';
 import { openApiDocument } from './docs/openapi.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { apiRateLimiter } from './middleware/rate-limit.js';
@@ -47,7 +48,11 @@ export function createApp(): Express {
         const normalised = origin.replace(/\/$/, '');
         if (env.CORS_ORIGINS.includes(normalised)) return callback(null, true);
 
-        return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+        // Refuse by withholding the CORS headers rather than by throwing: throwing
+        // here surfaces as an opaque 500, while this leaves the browser to block
+        // the response for the real reason and keeps the log honest.
+        logger.warn({ origin }, 'Blocked a request from a disallowed origin');
+        return callback(null, false);
       },
       credentials: true,
       methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
