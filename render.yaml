@@ -26,6 +26,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # npm ci skips devDependencies (typescript, @types/node) when NODE_ENV is
+      # already "production" at build time — this keeps them installed for the build.
+      - key: NPM_CONFIG_PRODUCTION
+        value: 'false'
       - key: DATABASE_URL
         fromDatabase:
           name: nova-postgres
